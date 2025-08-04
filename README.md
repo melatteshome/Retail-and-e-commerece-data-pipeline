@@ -18,3 +18,6 @@ Today, this information lives in separate systems that refresh at different spee
 ---
 
 
+## Pipeline Diagram
+
+![diagram](screenshots/data-pipeline.drawio.png)
