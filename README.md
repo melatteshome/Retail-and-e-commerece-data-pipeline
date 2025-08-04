@@ -20,4 +20,10 @@ Today, this information lives in separate systems that refresh at different spee
 
 ## Pipeline Diagram
 
-![diagram](screenshots/data-pipeline.drawio.png)
+
+<p align="center">
+  <img src="screenshots/data-pipeline.drawio.png"
+       style="max-width:100%; width:700px; border:2px solid #eee; border-radius:8px"
+       alt="Diagram screenshot">
+</p>
+
