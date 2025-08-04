@@ -1,14 +1,20 @@
-# Retail-and-e-commerece-data-pipeline
-Modern retail and e-commerce teams need to understand what shoppers are doing right now—which products they view, promotions they click, and items they add to cart—so they can react with relevant offers, replenishment decisions, and personalized experiences. Today, however, this information is scattered across raw click-stream logs, product catalogs, promo lists, and inventory systems that update at different speeds and in different formats. Analysts and data products often wait hours (or days) for slow batch jobs to stitch everything together, making insights stale and actions mistimed.
+# Near-Real-Time Purchase Pipeline  
+*(Retail & eCommerce Data Engineering Project)*
 
-This project solves that gap by building a near-real-time purchase data pipeline that:
+## 📚 Problem Statement  
+Retail and e-commerce teams need to understand what shoppers are doing **right now**—which products they view, promotions they click, and items they add to cart—so they can respond with relevant offers and keep shelves stocked.  
+Today, this information lives in separate systems that refresh at different speeds. Analysts may wait hours (or days) for overnight batch jobs to stitch everything together, making insights stale and actions mistimed.
 
-Ingests live web events from storefronts via Kafka.
+**Goal:** Build a **near-real-time data pipeline** that ingests live web events, enriches them with product, promo, and inventory details, and lands curated fact tables in a cloud warehouse within minutes.
 
-Enriches each event on the fly with product, promotion, and inventory details using Spark.
+---
 
-Tracks history cleanly with Slowly Changing Dimension Type 2 (SCD-2) tables.
+## 🎯 Project Objectives
+1. **Ingest live click-stream events** from the storefront (Kafka or Kinesis).
+2. **Enrich events on the fly** with reference data using Spark or Flink.
+3. **Track history** using Slowly Changing Dimension Type-2 (SCD-2) tables.
+4. **Deliver query-ready facts** to BigQuery or Snowflake for BI and ML use cases.
 
-Lands query-ready fact tables in a cloud warehouse databend within minutes.
+---
 
-With this pipeline in place, downstream dashboards, recommendation engines, and BI tools get fresh, complete, and trustworthy data—empowering the business to spot trends instantly, target customers accurately, and keep shelves stocked.
+
