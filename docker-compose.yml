@@ -1,169 +1,111 @@
 version: "3.9"
 
 networks:
-  bigdata-net: {}
-
-services:
-  kafka:
-    image: bitnami/kafka:latest
-    container_name: kafka
-    environment:
-      KAFKA_ENABLE_KRAFT: "yes"                     # ➊ new mode
-      KAFKA_CFG_NODE_ID: 1                          # ➋ unique int
-      KAFKA_CFG_PROCESS_ROLES: controller,broker    # ➌ declare role(s)
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-    ports:
-      - "9092:9092"
-
-
-  # ---------- Spark cluster ----------
-  spark-master:
-    image: bitnami/spark:latest
-    container_name: spark-master
-    environment:
-      SPARK_MODE: master
-      SPARK_MASTER_HOST: spark-master
-    ports:
-      - "8080:8080"   # Web UI
-      - "7077:7077"   # RPC
-    volumes:
-      - ./spark/apps:/opt/spark-apps
-
-  spark-worker-1:
-    image: bitnami/spark:latest
-    container_name: spark-worker-1
-    depends_on: [spark-master]
-    environment:
-      SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://spark-master:7077
-    ports: ["8081:8081"]
-
-  spark-worker-2:
-    image: bitnami/spark:latest
-    container_name: spark-worker-2
-    depends_on: [spark-master]
-    environment:
-      SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://spark-master:7077
-    ports: ["8082:8081"]
-
-  # ---------- Databend (Meta + Query) ----------
-  databend-meta:
-    image: datafuselabs/databend-meta:latest
-    container_name: databend-meta
-    command: >
-      /databend-meta
-      --single
-      --grpc-api-address=0.0.0.0:9191
-      --admin-api-address=0.0.0.0:28101
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:28101/v1/health"]
-      interval: 5s
-      retries: 10
-    environment:
-      - RUST_BACKTRACE=1
-    volumes:
-      - ./databend-meta:/data
-
-  databend-query:
-    image: datafuselabs/databend-query:latest
-    container_name: databend-query
-    depends_on: [databend-meta]
-    environment:
-      QUERY_DEFAULT_USER: root
-      QUERY_DEFAULT_PASSWORD: root
-      META_ENDPOINTS: databend-meta:9191
-    ports:
-      - "9090:9090"   # Flight/Arrow
-      - "3307:3307"   # MySQL wire-protocol
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7070/metrics"]
-      interval: 10s
-      retries: 10
-    volumes:
-      - ./databend-query:/var/lib/databend
-
-
-
-
-  # ────────── Hadoop ──────────
-  namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
-    container_name: namenode
-    hostname: namenode.local
-    environment:
-      - CLUSTER_NAME=hive-cluster
-      - CORE_CONF_fs_defaultFS=hdfs://namenode.local:8020
-    ports:
-      - "9870:9870"     # NameNode web UI
-      - "8020:8020"     # HDFS RPC
-    volumes:
-      - namenode-data:/hadoop/dfs/name
-    networks: [bigdata-net]
-
-  datanode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: datanode
-    hostname: datanode.local
-    environment:
-      - CORE_CONF_fs_defaultFS=hdfs://namenode.local:8020
-    depends_on: [namenode]
-    ports:
-      - "9864:9864"     # DataNode web UI
-    volumes:
-      - datanode-data:/hadoop/dfs/data
-    networks: [bigdata-net]
-
-  # ────────── Hive Metastore backend ──────────
-  metastore-db:
-    image: postgres:14
-    container_name: metastore-db
-    hostname: metastore-db.local
-    environment:
-      POSTGRES_DB: metastore
-      POSTGRES_USER: hive
-      POSTGRES_PASSWORD: hivepassword
-    volumes:
-      - metastore-db-data:/var/lib/postgresql/data
-    networks: [bigdata-net]
-
-  # ────────── Hive services ──────────
-  metastore:
-    image: apache/hive:4.0.0
-    container_name: hive-metastore
-    hostname: metastore.local
-    environment:
-      SERVICE_NAME: metastore
-      HIVE_METASTORE_USER: hive
-      HIVE_METASTORE_PASSWORD: hivepassword
-      HIVE_METASTORE_DB_HOSTNAME: metastore-db.local
-      CORE_CONF_fs_defaultFS: hdfs://namenode.local:8020
-    depends_on: [namenode, datanode, metastore-db]
-    ports:
-      - "9083:9083"     # Thrift metastore
-    networks: [bigdata-net]
-
-  hiveserver2:
-    image: apache/hive:4.0.0
-    container_name: hiveserver2
-    hostname: hiveserver2.local
-    environment:
-      SERVICE_NAME: hiveserver2
-      HIVE_METASTOREURIS: thrift://metastore.local:9083
-      CORE_CONF_fs_defaultFS: hdfs://namenode.local:8020
-    depends_on: [metastore]
-    ports:
-      - "10000:10000"   # JDBC/Beeline
-      - "10002:10002"   # Web UI
-    networks: [bigdata-net]
+  bigdata: {}
 
 volumes:
-  namenode-data:
-  datanode-data:
-  metastore-db-data:
+  hadoop_namenode:
+  hadoop_datanode:
+  databend_meta:
+  databend_query:
+
+services:
+  # ---------- Hadoop (HDFS 3.2.1) ----------
+  hadoop-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8   # ← fixed tag
+    container_name: namenode
+    hostname: namenode
+    environment:
+      - CLUSTER_NAME=demo
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    networks: [bigdata]
+
+  hadoop-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8   # ← fixed tag
+    container_name: datanode
+    hostname: datanode
+    depends_on: [hadoop-namenode]
+    environment:
+      - CLUSTER_NAME=demo
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - DFS_CONF_dfs_replication=1
+    ports:
+      - "9864:9864"
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    networks: [bigdata]
+
+  # ---------- ZooKeeper & Kafka ----------
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports: ["2181:2181"]
+    networks: [bigdata]
+
+  kafka:
+    image: bitnami/kafka:3.7.0          # verified tag :contentReference[oaicite:1]{index=1}
+    container_name: kafka
+    depends_on: [zookeeper]
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+    ports: ["9092:9092"]
+    networks: [bigdata]
+
+  # ---------- Databend ----------
+# --- only the Databend section changed ----------
+  databend-meta:
+    image: datafuselabs/databend-meta:v1.2.657-nightly   # ← new tag
+    container_name: databend-meta
+    command: ["databend-meta","--log-level=INFO","--single"]
+    volumes:
+      - databend_meta:/var/lib/databend
+    ports:
+      - "9191:9191"        # gRPC / admin
+    networks: [bigdata]
+
+  databend-query:
+    image: datafuselabs/databend-query:v1.2.657-nightly  # ← new tag
+    container_name: databend-query
+    depends_on: [databend-meta]
+    command: ["databend-query","--log-level=INFO","--meta-addr=databend-meta:9191"]
+    volumes:
+      - databend_query:/var/lib/databend
+    ports:
+      - "8000:8000"        # HTTP SQL console
+      - "3307:3307"        # MySQL wire-protocol
+    networks: [bigdata]
+# -------------------------------------------------------
 
 
+  # ---------- Spark ----------
+  spark-master:
+    image: bitnami/spark:3.5.0
+    container_name: spark-master
+    hostname: spark-master
+    environment: [SPARK_MODE=master]
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    networks: [bigdata]
+
+  spark-worker:
+    image: bitnami/spark:3.5.0
+    container_name: spark-worker
+    depends_on: [spark-master]
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+    ports: ["8081:8081"]
+    networks: [bigdata]

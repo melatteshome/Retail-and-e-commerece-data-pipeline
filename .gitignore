@@ -1,2 +1,3 @@
 .env
 .myenv/
+src/data_generation/generated_data/

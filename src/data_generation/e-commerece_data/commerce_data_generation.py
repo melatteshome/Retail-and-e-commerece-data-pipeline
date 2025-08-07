@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-"""
-Generate synthetic e‑commerce data and save to CSV.
-Usage:  python gen_ecommerce.py --rows 50_000 --seed 42
-"""
-
 import argparse
 import random
 from datetime import datetime, timedelta
@@ -105,7 +99,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--rows", type=int, default=100_000, help="transaction rows")
     parser.add_argument("--seed", type=int, default=None, help="random seed")
-    parser.add_argument("--outdir", default="output", help="folder for CSVs")
+    parser.add_argument("--outdir", default="generated_data", help="folder for CSVs")
     args = parser.parse_args()
 
     if args.seed is not None:
