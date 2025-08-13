@@ -12,7 +12,7 @@ volumes:
 services:
   # ---------- Hadoop (HDFS 3.2.1) ----------
   hadoop-namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8   # ← fixed tag
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8   
     container_name: namenode
     hostname: namenode
     environment:
@@ -25,7 +25,7 @@ services:
     networks: [bigdata]
 
   hadoop-datanode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8   # ← fixed tag
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8   
     container_name: datanode
     hostname: datanode
     depends_on: [hadoop-namenode]
@@ -49,7 +49,7 @@ services:
     networks: [bigdata]
 
   kafka:
-    image: bitnami/kafka:3.7.0          # verified tag :contentReference[oaicite:1]{index=1}
+    image: bitnami/kafka:3.7.0          
     container_name: kafka
     depends_on: [zookeeper]
     environment:
@@ -62,19 +62,18 @@ services:
     networks: [bigdata]
 
   # ---------- Databend ----------
-# --- only the Databend section changed ----------
   databend-meta:
-    image: datafuselabs/databend-meta:v1.2.657-nightly   # ← new tag
+    image: datafuselabs/databend-meta:v1.2.657-nightly   
     container_name: databend-meta
     command: ["databend-meta","--log-level=INFO","--single"]
     volumes:
       - databend_meta:/var/lib/databend
     ports:
-      - "9191:9191"        # gRPC / admin
+      - "9191:9191"        
     networks: [bigdata]
 
   databend-query:
-    image: datafuselabs/databend-query:v1.2.657-nightly  # ← new tag
+    image: datafuselabs/databend-query:v1.2.657-nightly 
     container_name: databend-query
     depends_on: [databend-meta]
     command: ["databend-query","--log-level=INFO","--meta-addr=databend-meta:9191"]
