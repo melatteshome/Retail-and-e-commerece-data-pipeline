@@ -3,23 +3,21 @@ from datetime import timezone
 from faker import Faker
 from faker.providers import BaseProvider
 import pandas as pd
-
+from typing import Tuple
 
 EVENT_TYPES = ["page_view", "add_to_cart", "checkout", "purchase" , "Order Completed", "Product Shared", "Product Reviewed", "select_promotion", "Products Searched", "Product List Viewed", "Product Clicked"]
-EVENT_PROBS = [0.70, 0.15, 0.10, 0.05]
+EVENT_PROBS: Tuple[float, ...] = (0.55, 0.30, 0.10, 0.05)
 
 
 class ClickStreamProvider(BaseProvider):
     _customer_ids: list[int] | None = None
     _product_ids:  list[int] | None = None
 
-    # ---------- one-time setup ----------
     @classmethod
     def configure(cls, customers, products) -> None:
         cls._customer_ids = list(customers)
         cls._product_ids  = list(products)
 
-    # ---------- public API ----------
     def click_event(self) -> dict:
         if self._customer_ids is None or self._product_ids is None:
             raise RuntimeError(
