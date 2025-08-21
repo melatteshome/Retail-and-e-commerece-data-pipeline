@@ -37,7 +37,7 @@ def delivery_cb(err, msg):
 
 
 
-def main(n=50):
+def generate_and_stream(n=50):
     env_file ='.env'
     if Path(env_file).exists():
         load_dotenv(env_file)
@@ -76,4 +76,4 @@ def main(n=50):
     producer.flush()
 
 if __name__ == "__main__":
-    main(n=100)
+    generate_and_stream(n=100)
