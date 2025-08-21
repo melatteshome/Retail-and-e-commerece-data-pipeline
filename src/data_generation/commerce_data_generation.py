@@ -83,7 +83,6 @@ def make_transactions(
         }
     )
 
-    # Add pricing fields (calculated, not random)
     prod_price_map = products.set_index("product_id")["unit_price"].to_dict()
     promo_map = promos.set_index("promo_code")["discount_pct"].to_dict()
 
